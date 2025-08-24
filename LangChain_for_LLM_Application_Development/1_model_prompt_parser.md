@@ -39,7 +39,7 @@ With direct API calls, prompting needs to be manually crafted and passed into `m
 
 ```python
 import openai
-response = openai.ChatCompletion.create(
+response = openai.OpenAI().chat.completions.create(
 	model="gpt-3.5-turbo",
 	messages="my prompt goes here",
 	temperature=0)
