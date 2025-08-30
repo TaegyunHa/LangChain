@@ -183,10 +183,10 @@ flowchart TD
     E --> |notify| G[End - Notification Only]
     E --> |respond| H[Forward to Response Agent]
     
-    style A fill:#e1f5fe
-    style C fill:#fff3e0
-    style E fill:#fff3e0
-    style H fill:#e8f5e8
+    style A fill:#e1f5fe, color:#000
+    style C fill:#fff3e0, color:#000
+    style E fill:#fff3e0, color:#000
+    style H fill:#e8f5e8, color:#000
 ```
 
 ### 2. Memory components
@@ -215,10 +215,10 @@ flowchart TB
     
     C --> D[Router & Agent Prompts]
     
-    style A fill:#fce4ec
-    style B fill:#fce4ec
-    style C fill:#fff3e0
-    style D fill:#e8f5e8
+    style A fill:#fce4ec, color:#000
+    style B fill:#fce4ec, color:#000
+    style C fill:#fff3e0, color:#000
+    style D fill:#e8f5e8, color:#000
 ```
 
 ### 3. Response agent system
@@ -240,10 +240,10 @@ flowchart TD
     H --> J
     I --> J
     
-    style A fill:#e1f5fe
-    style B fill:#f3e5f5
-    style C fill:#f3e5f5
-    style J fill:#e8f5e8
+    style A fill:#e1f5fe, color:#000
+    style B fill:#f3e5f5, color:#000
+    style C fill:#f3e5f5, color:#000
+    style J fill:#e8f5e8, color:#000
 ```
 
 ### 4. LLM infrastructure
@@ -256,12 +256,12 @@ flowchart TB
     B --> E[Structured Output<br/>Router Class]
     D --> F[Tool Execution<br/>& Response Generation]
     
-    style A fill:#e8eaf6
-    style B fill:#e8eaf6
-    style C fill:#e8eaf6
-    style D fill:#e8eaf6
-    style E fill:#fff3e0
-    style F fill:#e8f5e8
+    style A fill:#e8eaf6, color:#000
+    style B fill:#e8eaf6, color:#000
+    style C fill:#e8eaf6, color:#000
+    style D fill:#e8eaf6, color:#000
+    style E fill:#fff3e0, color:#000
+    style F fill:#e8f5e8, color:#000
 ```
 
 ### 5. System overview
@@ -302,14 +302,14 @@ flowchart TD
     C -.-> N
     F -.-> O
     
-    style A fill:#e1f5fe
-    style C fill:#fff3e0
-    style F fill:#f3e5f5
-    style K fill:#e8f5e8
-    style L fill:#fce4ec
-    style M fill:#fce4ec
-    style N fill:#e8eaf6
-    style O fill:#e8eaf6
+    style A fill:#e1f5fe, color:#000
+    style C fill:#fff3e0, color:#000
+    style F fill:#f3e5f5, color:#000
+    style K fill:#e8f5e8, color:#000
+    style L fill:#fce4ec, color:#000
+    style M fill:#fce4ec, color:#000
+    style N fill:#e8eaf6, color:#000
+    style O fill:#e8eaf6, color:#000
 ```
 
 
