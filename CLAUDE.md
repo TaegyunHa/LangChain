@@ -56,4 +56,6 @@ Each course has:
 - This is a study/reference repository - no build or test commands needed
 - Jupyter notebooks are self-contained with their own setup cells
 - External API calls require proper authentication setup
-- Some notebooks may take time to complete due to external service calls (YouTube, web scraping)
+  - All authentication is expected to be stored in `.env`, which should never be shared
+  - Currently `.env` file is prevented to be shared by `.gitignore`
+- uv is used to manage all python package. do not use python call directly and make sure to use uv for python related implementation

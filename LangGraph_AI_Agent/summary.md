@@ -1187,7 +1187,5 @@ with SqliteSaver.from_conn_string(":memory:") as memory:
     app.launch()
 ```
 
+### Run graph node in parallel
 
-```python
-
-```

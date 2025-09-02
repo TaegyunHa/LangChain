@@ -152,15 +152,15 @@ With output parser:
 
 **Output format of get_format_instruction**
 
-```md
-The output should be a markdown code snippet formatted in the following schema, including the leading and trailing "\`\`\`json" and "\`\`\`":
+~~~md
+The output should be a markdown code snippet formatted in the following schema, including the leading and trailing "```json" and "```":
 
-\`\`\`json
+```json
 {
 	"<ResponseSchema.name>": string // <ResponseSchema.description>
 }
-\`\`\`
 ```
+~~~
 
 - Why `:string`? 
 	- This indicates the expected data type for the field.
