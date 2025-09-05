@@ -1,5 +1,24 @@
 # ReAct Agent
 
+**Table of Contents**
+
+- [ReAct Agent](#react-agent)
+- [Overview](#overview)
+- [ReAct Agent Workflow](#react-agent-workflow)
+  - [Setup OpenAI](#setup-openai)
+- [Agent in LangGraph](#agent-in-langgraph)
+  - [AgentState and Agent](#agentstate-and-agent)
+    - [State graph](#state-graph)
+- [Agentic search tool](#agentic-search-tool)
+- [Persistence in LangGraph](#persistence-in-langgraph)
+- [Streaming in LangGraph](#streaming-in-langgraph)
+  - [Overview of Persistence and Streaming](#overview-of-persistence-and-streaming)
+- [Human in the Loop](#human-in-the-loop)
+- [Essay writer](#essay-writer)
+    - [Run graph node in parallel](#run-graph-node-in-parallel)
+
+# Overview
+
 > https://arxiv.org/abs/2210.03629
 
 ReAct stands for reasoning and acting.
@@ -15,7 +34,7 @@ graph LR
     C --> |Observation| B
 ```
 
-## ReAct Agent Workflow
+# ReAct Agent Workflow
 
 1. **System Message Setup**
     - The agent requires a very specific system prompt to define how it should operate.
@@ -71,7 +90,6 @@ flowchart TD
 
 ## Setup OpenAI
 
-
 ```python
 # Setup OpenAI Tavily API key
 def setup_openai_api_key():
@@ -84,7 +102,6 @@ LLM_MODEL:str = "gpt-4o-mini"
 ```
 
 **Agent class**
-
 
 ```python
 import openai
@@ -297,7 +314,7 @@ flowchart TD
 ```
 ---
 
-### AgentState and Agent
+## AgentState and Agent
 
 
 ```python
@@ -376,7 +393,7 @@ class Agent:
   - `add_conditional_edges`: `add_edge` but with condition
 - each node returns `{"messages", result}`, which then gets added into `AgentState["messages"]`
 
-#### State graph
+### State graph
 
 > https://langchain-ai.github.io/langgraph/concepts/low_level/?h=stategraph#schema
 
@@ -410,7 +427,7 @@ print(result)
 print(result['messages'][-1].content)
 ```
 
-## Agentic search tool
+# Agentic search tool
 
 Traditional zero-shot learning model struggles with dynamic data and sourcing information (live information). Agentic search addresses this by involving a search tool.
 
@@ -462,7 +479,7 @@ result = client.search("What is in Nvidia's new Blackwell GPU?",
 result["answer"]
 ```
 
-## Persistence in LangGraph
+# Persistence in LangGraph
 
 > https://langchain-ai.github.io/langgraph/concepts/persistence/
 
@@ -507,9 +524,7 @@ Core functionality of checkpoints are:
 - `langgraph-checkpoint-sqlite`
 - `langgraph-checkpoint-postgres`
 
-
-
-## Streaming in LangGraph
+# Streaming in LangGraph
 
 > https://langchain-ai.github.io/langgraph/concepts/streaming/
 
@@ -669,7 +684,7 @@ async with AsyncSqliteSaver.from_conn_string(":memory:") as memory:
 - `AsyncSqliteSaver`
   - Package has been changed from `aiosqlite` to `sqlite.aio`
 
-## Human in the Loop
+# Human in the Loop
 
 > https://langchain-ai.github.io/langgraph/concepts/human_in_the_loop/#key-capabilities
 
@@ -1023,7 +1038,7 @@ with SqliteSaver.from_conn_string(":memory:") as memory:
 
 ```
 
-## Essay writer
+# Essay writer
 
 
 ```python

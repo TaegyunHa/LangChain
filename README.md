@@ -4,11 +4,13 @@ This repository will provide a summary of LangChain courses by DeepLearning.AI.
 
 ## Covered Courses
 
-| Course                                    | Study Note                                                                   | Link                                                                                    |
-| ----------------------------------------- | ---------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
-| LangChain for LLM Application Development | [Summary](./LangChain_for_LLM_Application_Development/7_Summary.md)          | [Course](https://learn.deeplearning.ai/courses/langchain)                               |
-| LangChain Chat with Your Data             | [Summary](./LangChain_Chat_with_Your_Data/5_Summary.md)                      | [Course](https://learn.deeplearning.ai/courses/langchain-chat-with-your-data)           |
-| Long-Term Agentic Memory With LangGraph   | [Summary](./LangGraph_Long_Term_Agentic_Memory/2_Baseline_Email_Asistant.md) | [Course](https://learn.deeplearning.ai/courses/long-term-agentic-memory-with-langgraph) |
+| Course                                     | Study Note                                                                              | Link                                                                                    |
+| ------------------------------------------ | --------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| LangChain for LLM Application Development  | [Summary](./LangChain_for_LLM_Application_Development/LangChain_Application_Summary.md) | [Course](https://learn.deeplearning.ai/courses/langchain)                               |
+| LangChain Chat with Your Data              | [Summary](./LangChain_Chat_with_Your_Data/LangChain_Chat_w_Data_Summary.md)             | [Course](https://learn.deeplearning.ai/courses/langchain-chat-with-your-data)           |
+| Long-Term Agentic Memory With LangGraph    | [Summary](./LangGraph_Long_Term_Agentic_Memory/LangGraph_Memory_Summary.md)             | [Course](https://learn.deeplearning.ai/courses/long-term-agentic-memory-with-langgraph) |
+| AI Agent in LangGraph                      | [Summary](./LangGraph_AI_Agent/LangGraph_Agent_Summary.md)                              | [Course](https://learn.deeplearning.ai/courses/ai-agents-in-langgraph/)                 |
+| Functions, Tools and Agents with LangChain | [Summary](./LangChain_Functions_tools_agent/LangChain_Function_Tool_Summary.md)                                                                             | [Course](https://learn.deeplearning.ai/courses/functions-tools-agents-langchain/)       |
 
 ## Setup
 
@@ -42,6 +44,12 @@ This repository will provide a summary of LangChain courses by DeepLearning.AI.
     ```powershell
     .venv\Scripts\activate
     ```
+
+### Jupyter Lab
+
+```bash
+uv run jupyter lab
+```
 
 ### Environment Variables
 

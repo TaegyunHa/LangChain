@@ -1,5 +1,24 @@
 # LangChain RAG (Retrieval-Augmented Generation) Summary
 
+**Table of Contents**
+- [Overview](#overview)
+- [1. Document Loading](#1-document-loading)
+- [2. Document Splitting](#2-document-splitting)
+- [3. Vectors and Embeddings](#3-vectors-and-embeddings)
+  - [Embeddings](#embeddings)
+  - [Vector Stores](#vector-stores)
+- [4. Retrieval Strategies](#4-retrieval-strategies)
+  - [Basic Similarity Search](#basic-similarity-search)
+  - [Maximum Marginal Relevance (MMR)](#maximum-marginal-relevance-mmr)
+  - [Self-Query Retrieval](#self-query-retrieval)
+  - [Contextual Compression](#contextual-compression)
+- [Strategy Selection Guide](#strategy-selection-guide)
+- [Combining Strategies](#combining-strategies)
+- [Performance Considerations](#performance-considerations)
+- [Visual Component Architecture](#visual-component-architecture)
+  - [Component Interaction Flow](#component-interaction-flow)
+  - [Key Integration Points](#key-integration-points)
+
 ## Overview
 
 RAG is a technique that combines information retrieval with language model generation to provide accurate, contextual responses using external knowledge. The process involves:
@@ -10,21 +29,25 @@ RAG is a technique that combines information retrieval with language model gener
 
 ## 1. Document Loading
 
-### Purpose
+**Purpose**
+
 Convert various data sources into LangChain `Document` objects for processing.
 
-### Key LangChain Objects
+**Key LangChain Objects**
+
 - `PyPDFLoader` - PDF documents
 - `GenericLoader` + `FileSystemBlobLoader` + `OpenAIWhisperParser` - Audio/Video
 - `WebBaseLoader` - Web pages
 - `NotionDirectoryLoader` - Notion databases
 
-### Loader Capabilities
+**Loader Capabilities**
+
 - **Data Sources**: Web sites, databases, YouTube, arXiv
 - **Formats**: PDF, HTML, JSON, Word documents
 - **Output**: Document objects with content and metadata
 
-### Examples
+**Examples**
+
 ```python
 # PDF Loading
 from langchain.document_loaders import PyPDFLoader
@@ -39,46 +62,46 @@ docs = loader.load()
 
 ## 2. Document Splitting
 
-### Purpose
+**Purpose**
+
 Break down large texts into smaller, manageable chunks to:
 - Handle varying document lengths consistently
 - Overcome model input size limitations
 - Improve text representation quality
 - Enhance retrieval precision
 
-### Key LangChain Objects
+**Key LangChain Objects**
+
 - `RecursiveCharacterTextSplitter` - Hierarchical splitting
 - `CharacterTextSplitter` - Simple character-based splitting
 - `TokenTextSplitter` - Token-based splitting
 - `MarkdownHeaderTextSplitter` - Structure-aware splitting
 
-### Splitting Strategies
+**Splitting Strategies**
 
-#### 1. Length-Based Splitting
-- **Character-based**: Split by character count
-- **Token-based**: Split by token count (useful for LLM input limits)
-
-#### 2. Text Structure-Based Splitting
-Uses `RecursiveCharacterTextSplitter` with hierarchical separators:
-```python
-r_splitter = RecursiveCharacterTextSplitter(
-    chunk_size=1500,
-    chunk_overlap=150,
-    separators=["\n\n", "\n", "\. ", " ", ""]
-)
-```
-
-#### 3. Document Structure-Based Splitting
-- **Markdown**: Split by headers (#, ##, ###)
-- **HTML**: Split by tags
-- **JSON**: Split by objects/arrays
-
-#### 4. Semantic Meaning-Based Splitting
-Uses embedding similarity to find natural breakpoints in content.
+1. Length-Based Splitting
+   - **Character-based**: Split by character count
+   - **Token-based**: Split by token count (useful for LLM input limits)
+2. Text Structure-Based Splitting
+    - Uses `RecursiveCharacterTextSplitter` with hierarchical separators:
+    ```python
+    r_splitter = RecursiveCharacterTextSplitter(
+        chunk_size=1500,
+        chunk_overlap=150,
+        separators=["\n\n", "\n", "\. ", " ", ""]
+    )
+    ```
+3. Document Structure-Based Splitting
+  - **Markdown**: Split by headers (#, ##, ###)
+  - **HTML**: Split by tags
+  - **JSON**: Split by objects/arrays
+4. Semantic Meaning-Based Splitting
+   - Uses embedding similarity to find natural breakpoints in content.
 
 ## 3. Vectors and Embeddings
 
 ### Embeddings
+
 **Definition**: Vector representations of text that capture semantic meaning.
 
 **Key Properties**:
@@ -86,12 +109,14 @@ Uses embedding similarity to find natural breakpoints in content.
 - Enable mathematical comparison (cosine similarity, dot product)
 - Support semantic search beyond keyword matching
 
-### Key LangChain Objects
+**Key LangChain Objects**
+
 - `OpenAIEmbeddings` - OpenAI embedding models
 - `Chroma` - Local vector store
 - `FAISS` - Efficient similarity search library
 
 ### Vector Stores
+
 **Purpose**: Specialized databases for storing and searching embedding vectors.
 
 **Workflow**:
@@ -145,6 +170,7 @@ Standard semantic similarity search using vector comparisons.
 - Filter: `source == "Lecture03.pdf"`
 
 ### Contextual Compression
+
 **Purpose**: Extract only relevant segments from retrieved documents.
 
 **Two-Phase Process**:
