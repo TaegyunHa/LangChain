@@ -1,340 +1,340 @@
 # RAG and Agents
 
-To solve a task, model needs:
-- Instructions on how to do it
-  - Common to all queries
-- Necessary information to do
-  - Context is specific to each query
+## Overview
 
-Context construction patterns:
-- **Retrieval-augmented-generation (RAG)**
-  - Retrieve relevant information from external source
-- **Agents**
-  - Use tools (web search, news API) to gather information
+**Context construction** is the process of providing a model with the necessary information to solve a task. While instructions are common to all queries, the context is specific to each query.
 
-## RAG
+This chapter covers:
+- **RAG (Retrieval-Augmented Generation)** retrieves relevant information from external sources to improve model responses, reducing hallucination and token usage
+- **Retrieval algorithms** from term-based (BM25, Elasticsearch) to embedding-based (vector search, ANN), with hybrid approaches combining both
+- **Agents** as autonomous entities that use tools to perceive their environment and take actions, with RAG as a specialised agent pattern
+- **Planning and memory** systems that enable agents to decompose tasks, reflect on outcomes, and persist information across sessions
 
-RAG improves a model's generation by retrieving the relevant information from external sources.
-External sources can be:
-- internal database
-- previous chat session
-- internet
+---
 
-RAG can be used as a solution for knowledge-intensive tasks.
-- retriever: only the information most relevant to the query is retrieved then input to the model.
-Construct context specific to each query.
+## 1. RAG - Retrieval-Augmented Generation
 
-Context construction:
-- feature engineering in ML
-- giving the necessary information to process as input
-- used to overcome the models' context limitation
+### 1.1 Why RAG Matters
 
-Regardless of models context capacity, RAG is still important.
-- longer context doesn't mean better use of context
-- longer the context, likely to focus on the wrong part of context
+> **Key Insight**: Longer context doesn't mean better use of context — the longer the context, the more likely the model is to focus on the wrong part.
 
-RAG can:
-- reduce the number of input tokens
-- increase the model performance
+RAG improves a model's generation by retrieving the relevant information from external sources. It serves as context construction — analogous to feature engineering in traditional ML.
 
-### RAG Architecture
+| Aspect | Without RAG | With RAG |
+|--------|------------|----------|
+| **Context** | Entire knowledge base or none | Only relevant chunks |
+| **Token usage** | High (long context) | Reduced (targeted retrieval) |
+| **Performance** | May focus on wrong context | Improved relevance |
+| **Knowledge** | Limited to training data | Extended via external sources |
 
-RAG system has two components:
-- **retriever**: retrieves information from external source
-- **generator**: generates a response based on the retrieved information
+External sources can include:
+- Internal databases
+- Previous chat sessions
+- The internet
+
+> **Key Takeaway**: Regardless of a model's context capacity, RAG remains important. It both reduces input tokens and increases model performance.
+
+### 1.2 RAG Architecture
+
+A RAG system has two core components:
+- **Retriever**: Fetches relevant information from external sources (indexing + querying)
+- **Generator**: Produces a response based on retrieved information
 
 ![RAG-Architecture](./images/RAG-arch.png)
 
-Two components are often trained separately, but finetuning the whole RAG system end-to-end can improve the performance significantly.
+The two components are often trained separately, but fine-tuning the whole RAG system end-to-end can improve performance significantly.
 
-Quality of retriever defines the success of RAG.
+**The quality of the retriever defines the success of RAG.**
+
 The retriever has two functions:
-- **Indexing**: processing data to retrieve data later
-- **Query**: retrieve data relevant to it.
+- **Indexing**: Processing data to enable efficient retrieval later
+- **Querying**: Retrieving data chunks most relevant to the query
 
-**Chunking strategy**: To avoid arbitrary context size, split each document into more manageable chunks.
-Goal is to retrieve the data chunk most relevant to the query.
+**Chunking strategy**: To avoid arbitrary context sizes, split each document into more manageable chunks. The goal is to retrieve the data chunk most relevant to the query.
 
-### Retrieval Algorithm
+---
 
-Traditional retrieval systems can be used for RAG. The retrieval works by ranking documents based on relevance to a given query.
+## 2. Retrieval Algorithms
 
-#### Term-based Retrieval
+### 2.1 Term-Based Retrieval
 
-- lexical retrieval
-  - keyword based
-  - problem 1: insufficient context space to include all
-    - term frequency(TF): more term appears, the more relevant
-  - problem 2: some term is more important than the other
-    - inverse document frequency(IDF): term's importance is inversely proportional to the number of documents it appears in (e.g. at, for). 
-    - IDF = nTotalDocument / nDocumentWithTerms
-    - Higher IDF = more important
-  - TF-IDF: combines TF and IDF.
-- Two common solutions
-  - Elasticsearch
-  - BM25
-- Tokenisation: process of breaking a query into individual terms
-  - split the query into words
-    - lose meaning (i.e. hot dog vs hot, dog)
-    - most common n-grams to avoid issue
-  - convert all characters to lowercase
-  - remove punctuation
-  - eliminate stop words (i.e. the, and, is)
-  - n-gram overlap between query and document
-    - works best when lengths of both are similar
-    - difficult to distinguish when documents are much longer
+> **Key Insight**: Term-based retrieval works well out of the box and is faster during both indexing and querying.
 
-#### Embedding-based Retrieval
+Lexical (keyword-based) retrieval ranks documents by term overlap with the query.
 
-- how closely meaning of document align with the query
-- indexing: converting the original data chunk into embeddings
-  - vector database: database generated by embedding
-- querying steps:
-  1. Embedding model: convert the query into an embedding
-  2. Retriever: fetch k data chunks whose embeddings are closest to the query embedding
-- reranker: rerank all retrieved candidates
-- cache: reduce latency
-- embedding-based retriever doesn't work if the embedding model is bad
-- vector database:
-  - storing is easy
-  - vector search is hard
-  - vector has to be indexed and stored in a way to search fast and efficient
-- vector search:
-  - nearest neighbour search problem
-  - K-nearest neighbours (KNN)
-    1. compute similarity scores between query embedding and all vectors using cosine similarity
-    2. rank all vectors by similarity scores
-    3. return k vectors with highest similarity scores
-    - precise result, but computationally heavy and slow. Should only be used for small datasets.
-  - approximate nearest neighbour (ANN)
-    - for large dataset
-    - vector database organise vectors into bucket, trees or graphs
-    - quantized and sparse vectors are less computationally intensive
-    - LSH (Locally Sensitive Hashing)
-      - hashing to speed up similarity search
-    - HNSW (hierarchical Navigable Small World)
-      - Multi-layer graph where nodes represent vectors. Nearest neighbour search by traversing graph edges
-    - Product Quantization
-      - lower dimensional representation by decomposing each vector into multiple subvectors. Faster to work
-    - IVF (Inverted file index)
-      - Organise similar vectors into the same cluster
-    - Annoy (Approximate Nearest Neighbors Oh Yeah)
-      - Multiple binary trees
+#### Core Concepts
 
-#### Comparing Retrieval Algorithms
+| Problem | Solution | How It Works |
+|---------|----------|-------------|
+| Insufficient context space | **Term Frequency (TF)** | The more a term appears, the more relevant the document |
+| Some terms matter more than others | **Inverse Document Frequency (IDF)** | Term importance is inversely proportional to the number of documents containing it |
+| Need combined relevance | **TF-IDF** | Combines TF and IDF for balanced scoring |
 
-- Term-based retrieval
-  - faster during both indexing and query
-  - less computationally expensive
-  - works well out of the box
-- Embedding based retrieval
-  - Can be significantly improved over time
-  - finetune the embedding model and retriever
-  - can obscure keywords
+- **IDF Formula**: `IDF = nTotalDocuments / nDocumentsWithTerm`
+  - Higher IDF = more important term
+- **Common implementations**:
+  - Elasticsearch, BM25
 
-Metrics used by RAG evaluation frameworks
-- context precision
-  - Out of all documents retrieved, what percentage is relevant to the query?
-  - Some RAG only support context precision as it's simpler to compute
-- context recall
-  - Out of all documents that are relevant to the query, what percentage is retrieved?
+#### Tokenisation for Retrieval
 
-Semantic retrieval, should evaluate the quality of embeddings.
-Data changes frequently -> frequent embedding regeneration.
-More detailed the index, more accurate the retrieval, but slower.
+Tokenisation is the process of breaking a query into individual terms:
+- Split the query into words (risk: loses meaning, e.g. "hot dog" → "hot", "dog")
+- Convert all characters to lowercase
+- Remove punctuation
+- Eliminate stop words (e.g. "the", "and", "is")
+- Use n-grams to preserve multi-word meaning
 
-ANN benchmarks four main metrics
-- Recall: the fraction of nearest neighbours found by the algorithm
-- Query per second (QPS): The number of queries that can be handled per second
-- Build time: time required to build the index
-- Index size: The size of index
+**Limitation**: N-gram overlap between query and document works best when lengths are similar. It becomes difficult to distinguish relevance when documents are much longer than the query.
 
-Quality of a RAG should be evaluated both component by component and end to end.
-1. Evaluate the retrieval quality
-2. Evaluate the final RAG output
-3. Evaluate the embeddings
+### 2.2 Embedding-Based Retrieval
 
-#### Combining Retrieval Algorithms
+> **Key Insight**: Embedding-based retrieval measures how closely the *meaning* of a document aligns with the query, not just keyword overlap.
 
-Reranking:
-- Hybrid search: combining term-based and embedding-based retrieval.
-  1. Cheap, less precise retriever term-based system fetches candidates
-  2. More precise and more expensive embedding based retrieval finds the best of candidates
+#### Indexing and Querying
 
+- **Indexing**: Convert original data chunks into embeddings → stored in a vector database
+- **Querying**:
+  1. Convert query into an embedding
+  2. Fetch k chunks with closest embeddings
+  3. Rerank candidates
 
-### Retrieval Optimisation
+**Important considerations**:
+- Embedding-based retrieval doesn't work if the embedding model is poor
+- Caching can reduce latency
+- In vector databases, storing is easy — **vector search is hard**
+- Vectors must be indexed and stored for fast, efficient search
 
-Improve retrieval result:
-1. chunking strategy
-2. reranking
-3. query rewriting
-4. contextual retrieval
+#### Vector Search Algorithms
+
+Vector search is fundamentally a **nearest neighbour search problem**.
+
+| Algorithm | How It Works | Trade-off |
+|-----------|-------------|-----------|
+| **KNN (K-Nearest Neighbours)** | Compute similarity scores between query and all vectors using cosine similarity, rank, return top k | Precise but computationally heavy — only for small datasets |
+| **ANN (Approximate Nearest Neighbour)** | Organise vectors into buckets, trees, or graphs; use quantised/sparse vectors | Faster, scalable, but approximate |
+
+#### ANN Algorithms
+
+| Algorithm | Approach |
+|-----------|----------|
+| **LSH** (Locally Sensitive Hashing) | Hashing to speed up similarity search |
+| **HNSW** (Hierarchical Navigable Small World) | Multi-layer graph where nodes represent vectors; nearest neighbour search by traversing graph edges |
+| **Product Quantisation** | Lower-dimensional representation by decomposing each vector into multiple subvectors |
+| **IVF** (Inverted File Index) | Organise similar vectors into the same cluster |
+| **Annoy** (Approximate Nearest Neighbors Oh Yeah) | Multiple binary trees |
+
+### 2.3 Comparing Retrieval Algorithms
+
+| Aspect | **Term-Based** | **Embedding-Based** |
+|--------|---------------|-------------------|
+| **Indexing speed** | Faster | Slower |
+| **Query speed** | Faster | Slower |
+| **Computational cost** | Less expensive | More expensive |
+| **Out-of-the-box quality** | Works well | Requires good embedding model |
+| **Improvement potential** | Limited | Significant (fine-tune embeddings) |
+| **Keyword handling** | Strong | Can obscure keywords |
+
+### 2.4 Combining Retrieval Algorithms
+
+**Hybrid search** combines term-based and embedding-based retrieval via reranking:
+
+```
+Stage 1: Cheap, less precise term-based retriever → fetches candidates
+Stage 2: More precise, more expensive embedding-based retriever → finds the best candidates
+```
+
+---
+
+## 3. Retrieval Evaluation and Optimisation
+
+### 3.1 Evaluation Metrics
+
+- **Context Precision**: Of all documents retrieved, what percentage is relevant?
+- **Context Recall**: Of all relevant documents, what percentage was retrieved?
+
+Some RAG frameworks only support context precision as it is simpler to compute.
+
+#### ANN Benchmarks
+
+| Metric | What It Measures |
+|--------|-----------------|
+| **Recall** | Fraction of nearest neighbours found by the algorithm |
+| **QPS** (Queries Per Second) | Number of queries handled per second |
+| **Build time** | Time required to build the index |
+| **Index size** | Size of the index |
+
+> **Key Takeaway**: Quality of a RAG system should be evaluated both component-by-component and end-to-end: (1) retrieval quality, (2) final RAG output, (3) embedding quality.
+
+### 3.2 Retrieval Optimisation Techniques
+
+Four primary techniques to improve retrieval results:
 
 #### Chunking Strategy
 
-- Split documents into smaller, more manageable chunks before indexing
-- Trade-off between chunk size and retrieval granularity:
-  - Smaller chunks: more precise retrieval, but may lose surrounding context
-  - Larger chunks: more context preserved, but may include irrelevant information
-- Common approaches:
-  - Fixed-size chunking (e.g. 512 tokens)
-  - Sentence-based or paragraph-based splitting
-  - Recursive splitting (split by hierarchy: document → section → paragraph → sentence)
-  - Semantic chunking (split based on topic or meaning boundaries)
-- Overlap between chunks can help preserve context at boundaries
+| Approach | Description |
+|----------|------------|
+| **Fixed-size chunking** | e.g. 512 tokens per chunk |
+| **Sentence/paragraph-based** | Split at natural boundaries |
+| **Recursive splitting** | Hierarchy: document → section → paragraph → sentence |
+| **Semantic chunking** | Split based on topic or meaning boundaries |
+
+**Trade-off**: Smaller chunks enable more precise retrieval but may lose surrounding context. Larger chunks preserve context but may include irrelevant information.
+
+**Overlap** between chunks can help preserve context at boundaries.
 
 #### Reranking
 
-- Two-stage retrieval pipeline:
-  1. Initial retrieval: cheap, less precise retriever fetches a broad set of candidates (e.g. ~50 documents)
-  2. Reranking: more precise, more expensive model scores and reorders the candidates
-- Rerankers can be:
-  - Cross-encoder models (jointly encode query and document for more accurate relevance scoring)
-  - LLM-based rerankers
-- Reranking improves precision without needing to run the expensive model over the entire corpus
+A two-stage retrieval pipeline:
+
+| Stage | Role | Characteristics |
+|-------|------|----------------|
+| **Initial retrieval** | Fetch broad set of candidates (~50 documents) | Cheap, less precise |
+| **Reranking** | Score and reorder candidates | More precise, more expensive |
+
+Rerankers can be:
+- **Cross-encoder models** — jointly encode query and document for more accurate relevance scoring
+- **LLM-based rerankers**
+
+Reranking improves precision without running the expensive model over the entire corpus.
 
 #### Query Rewriting
 
 - Rewrite the query to reflect what the user is actually asking
-- The new query should make sense on its own, without needing prior conversation context
-- Useful when queries are ambiguous or reference prior conversation
-  - e.g. "How about her?" → "How about Aunt Mabel from the previous question?"
+- The new query should make sense on its own, without prior conversation context
+- Example: "How about her?" → "How about Aunt Mabel from the previous question?"
 - Prompt pattern: *"Given the following conversation, rewrite the last user input to reflect what the user is actually asking"*
-- The rewriting model should acknowledge when a query isn't solvable rather than hallucinating, which would lead to retrieving wrong answers
-- Trade-off: adds latency due to the additional generation step
+- The rewriting model should acknowledge when a query is not solvable rather than hallucinating
+- **Trade-off**: Adds latency due to the additional generation step
 
 #### Contextual Retrieval
 
 - "Chunks-for-chunks" approach: retrieve supplementary context for initially retrieved chunks
 - After fetching initial chunks, retrieve additional metadata, tags, or related chunks to enrich context
-- Helps the generator understand the broader context around a specific chunk
 - Can include:
   - Document-level metadata (title, author, date)
   - Section headers or summaries
   - Neighbouring chunks from the same document
 
-#### Evaluating Retrieval Solution
+### 3.3 Cost Considerations
 
-- Evaluate both component-by-component and end-to-end
-- Key metrics:
-  - Context precision: of all documents retrieved, what percentage is relevant?
-  - Context recall: of all relevant documents, what percentage was retrieved?
-- Cost considerations:
-  - According to the reference, vector database expenses can consume between one-fifth to one-half of total model API spending
-  - Includes both storage and query costs
-- Monitor:
-  - Retrieval latency
-  - Index build time and size
-  - Embedding regeneration frequency (important when data changes often)
+- Vector database expenses can consume between **one-fifth to one-half** of total model API spending
+- Includes both storage and query costs
+- Data changes frequently → frequent embedding regeneration required
+- More detailed the index, more accurate the retrieval, but slower
 
-### RAG beyond Text
+---
 
-#### Multimodal RAG
+## 4. RAG Beyond Text
 
-- Extend RAG beyond text to include images, audio, and video
-- Approaches:
-  - Convert non-text modalities to text (e.g. image captioning, speech-to-text) then use standard text RAG
-  - Use multimodal embedding models that embed different modalities into a shared vector space
-  - Use multimodal LLMs that can directly process mixed-modality retrieved content
-- Challenges:
-  - Aligning embeddings across modalities
-  - Evaluating retrieval quality for non-text data
+### 4.1 Multimodal RAG
 
-#### RAG with Tabular Data
+Extend RAG beyond text to include images, audio, and video.
 
-- Structured data (tables, databases) requires different retrieval strategies than unstructured text
-- Approaches:
-  - Text-to-SQL: convert natural language query into SQL to retrieve from databases
-  - Table serialisation: convert tables to text format for embedding and retrieval
-  - Hybrid: combine structured queries with semantic search over table descriptions
-- Challenges:
-  - Preserving table structure and relationships
-  - Handling large tables that exceed context limits
+| Approach | How It Works |
+|----------|-------------|
+| **Modality conversion** | Convert non-text to text (image captioning, speech-to-text), then use standard text RAG |
+| **Multimodal embeddings** | Embed different modalities into a shared vector space |
+| **Multimodal LLMs** | Directly process mixed-modality retrieved content |
 
-## Agents
+**Challenges**: Aligning embeddings across modalities; evaluating retrieval quality for non-text data.
 
-### Overview
+### 4.2 RAG with Tabular Data
 
-- An agent is "an entity capable of perceiving its environment and acting upon it"
-- Characterised by:
-  - The environment it operates in
-  - The actions/tools available to it
-- Agents use tools to gather information and take actions to accomplish tasks
-- RAG can be viewed as a specialised agent pattern where the retriever functions as a tool
+Structured data (tables, databases) requires different retrieval strategies.
 
-### Tools
+| Approach | How It Works |
+|----------|-------------|
+| **Text-to-SQL** | Convert natural language query into SQL to retrieve from databases |
+| **Table serialisation** | Convert tables to text format for embedding and retrieval |
+| **Hybrid** | Combine structured queries with semantic search over table descriptions |
 
-Tools extend what an agent can do beyond the base model's capabilities. Three categories:
+**Challenges**: Preserving table structure and relationships; handling large tables that exceed context limits.
 
-#### Knowledge Augmentation
+---
 
-- RAG systems: retrieve information from internal databases or document stores
-- Web search: access up-to-date information from the internet
-- API calls: query external services for specific data (e.g. weather, stock prices, news)
-- These tools provide the agent with information it doesn't have in its training data
+## 5. Agents
 
-#### Capability Extension
+### 5.1 What Is an Agent?
 
-- Code interpreters: execute code to perform calculations, data analysis, or generate visualisations
-- Terminal access: run shell commands, interact with the file system
-- Function execution: invoke external functions or services
-- According to the reference, capability extension tools significantly boost performance compared to prompting or fine-tuning alone
+> **Key Insight**: An agent is "an entity capable of perceiving its environment and acting upon it."
 
-#### Write Actions
+An agent is characterised by:
+- **The environment** it operates in
+- **The actions/tools** available to it
 
-- Data manipulation: create, update, or delete records in databases
-- Storage operations: save files, update documents
-- External interactions: send emails, post messages, create calendar events
-- These are the most impactful but also the riskiest tools — they change state in the real world
+Agents use tools to gather information and take actions to accomplish tasks. **RAG can be viewed as a specialised agent pattern** where the retriever functions as a tool.
 
-### Planning
+### 5.2 Tools
+
+Tools extend what an agent can do beyond the base model's capabilities.
+
+| Category | Purpose | Examples | Risk Level |
+|----------|---------|----------|-----------|
+| **Knowledge Augmentation** | Provide information not in training data | RAG systems, web search, API calls (weather, stocks, news) | Low |
+| **Capability Extension** | Perform actions the model cannot do alone | Code interpreters, terminal access, function execution | Medium |
+| **Write Actions** | Change state in the real world | Database CRUD, file operations, send emails, post messages | High |
+
+Capability extension tools significantly boost performance compared to prompting or fine-tuning alone. Write actions are the most impactful but also the **riskiest** — they change state in the real world.
+
+### 5.3 Planning
 
 #### Foundation Models as Planners
 
 - There is debate about whether autoregressive models can truly plan
 - In practice, foundation models can decompose tasks and generate step-by-step plans
-- Planning quality depends heavily on the model's capabilities and the prompt design
+- Planning quality depends heavily on model capabilities and prompt design
 
 #### Plan Generation
 
 ![plan-exe](./images/plan-exe.png)
 _Decoupling planning and execution to execute only validated plans_
 
-- Four-stage planning cycle:
-  1. **Plan generation**: decompose the task into sub-tasks
-  2. **Initial reflection**: evaluate the plan before execution
-  3. **Execution**: carry out the plan via function calls and tool use
-  4. **Final reflection**: evaluate the outcome and adjust if needed
-- Ways to improve plan generation:
-  - Enhance system prompts with examples
-  - Provide better tool descriptions and documentation
-  - Refactor complex functions into simpler ones
-  - Use stronger models or fine-tune for planning
+**Four-stage planning cycle**:
+
+| Stage | Purpose |
+|-------|---------|
+| **1. Plan generation** | Decompose the task into sub-tasks |
+| **2. Initial reflection** | Evaluate the plan before execution |
+| **3. Execution** | Carry out the plan via function calls and tool use |
+| **4. Final reflection** | Evaluate the outcome and adjust if needed |
+
+**Ways to improve plan generation**:
+- Enhance system prompts with examples
+- Provide better tool descriptions and documentation
+- Refactor complex functions into simpler ones
+- Use stronger models or fine-tune for planning
 
 #### Function Calling
 
-- The mechanism by which agents invoke tools
-- Requires:
-  - Tool inventory: function names, parameters, and documentation
-  - Usage specifications: which parameters are required vs optional
-- The model generates structured output (e.g. JSON) specifying which function to call and with what arguments
+The mechanism by which agents invoke tools. Requires:
+- **Tool inventory**: Function names, parameters, and documentation
+- **Usage specifications**: Required vs optional parameters
+
+The model generates structured output (e.g. JSON) specifying which function to call and with what arguments.
 
 #### Planning Granularity
 
-- Trade-off: "Higher-level plans are easier to generate but harder to execute, while detailed plans are harder to generate but easier to execute"
-- Generate higher level plan, then move to finer level plan.
-- Tool inventory can change over time
-  - Using exact function names makes it harder to reuse a planner across different use cases with different tool APIs (fine-tuning required)
-  - To avoid this problem, plans can be generated using more natural language
-  - This approach requires an additional "translator" to translate each natural language action into an executable command, however it's a simpler task than planning and lower risk of hallucination
+> **Key Insight**: Higher-level plans are easier to generate but harder to execute, while detailed plans are harder to generate but easier to execute.
 
-#### Complex Plans
+| Approach | Advantage | Disadvantage |
+|----------|-----------|-------------|
+| **High-level plans** | Easier to generate | Harder to execute |
+| **Detailed plans** | Easier to execute | Harder to generate |
+| **Hierarchical** | Generate high-level first, then refine to finer level | Best of both |
 
-- Execution patterns for multi-step plans:
-  - **Sequential**: actions performed one after another; predictable but potentially slow
-  - **Parallel**: concurrent actions when there are no dependencies; faster but adds complexity
-  - **Conditional**: decision points (if-statements) that adapt based on intermediate results
-  - **Iterative**: loops for repetitive tasks over datasets or collections
+**Tool inventory and reusability**:
+- Using exact function names makes it harder to reuse a planner across different use cases (fine-tuning required)
+- Plans can instead be generated using natural language
+- This requires an additional "translator" to convert each natural language action into an executable command — a simpler task than planning with lower hallucination risk
+
+#### Complex Plan Execution Patterns
+
+| Pattern | Description | Trade-off |
+|---------|------------|-----------|
+| **Sequential** | Actions performed one after another | Predictable but potentially slow |
+| **Parallel** | Concurrent actions when no dependencies | Faster but adds complexity |
+| **Conditional** | Decision points (if-statements) adapting to intermediate results | Flexible but harder to debug |
+| **Iterative** | Loops for repetitive tasks over datasets | Efficient but risk of infinite loops |
 
 #### Reflection and Error Correction
 
@@ -345,54 +345,73 @@ _Decoupling planning and execution to execute only validated plans_
   - Avoid repeating the same failed action
 - Self-reflection can be built into the agent loop as an explicit step
 
-#### Tool Selection
+### 5.4 Tool Selection
 
-- More tools give more capabilities; however, the more tools there are, the harder it is to efficiently use them
-- Systematic approach to choosing and evaluating tools:
-  - Conduct ablation studies to measure each tool's impact on performance
-  - Monitor usage patterns and error rates
-  - Analyse call distribution across tools
-- Model-specific preferences: different models may prefer different tool sets
-  - According to the reference, GPT-4 tends to use broader tool sets than ChatGPT
+> **Key Insight**: More tools give more capabilities; however, the more tools there are, the harder it is to efficiently use them.
 
-### Agent Failure Modes and Evaluation
+**Systematic approach to tool evaluation**:
+- Conduct ablation studies to measure each tool's impact on performance
+- Monitor usage patterns and error rates
+- Analyse call distribution across tools
 
-#### Planning Failures
+**Model-specific preferences**: Different models may prefer different tool sets. GPT-4 tends to use broader tool sets than ChatGPT.
 
-- Most common mode of planning failure is tool use failure.
-  - **Invalid tool**: model selects a tool that does not exist or is not available
-  - **Valid tool, invalid parameters**: model calls the right tool but with parameters that do not match the expected schema
-  - **Valid tool, incorrect parameter values**: model calls the right tool with valid parameter names, but the values are wrong or nonsensical
-- Mitigation: clear tool documentation, constrained tool selection, schema validation, few-shot examples
+---
 
-#### Tool Failures
+## 6. Agent Failure Modes and Evaluation
 
-- The tool itself executes but produces wrong or unusable outputs:
-  - External service downtime or rate limiting
-  - Stale or incorrect data returned by the tool
-  - Misunderstanding of tool capabilities leading to misinterpreted results
-- Mitigation: robust error handling, fallback strategies, output validation, retry logic
+### 6.1 Planning Failures
 
-#### Efficiency
+The most common mode of planning failure is **tool use failure**.
 
-- Evaluation should cover:
-  - Average number of steps the agent needs to complete a task
-  - Cost per task completion (token usage, API calls, tool invocations)
-  - Time taken per action (latency profiling for each step in the pipeline)
+| Failure Type | Description | Example |
+|-------------|------------|---------|
+| **Invalid tool** | Model selects a tool that does not exist | Calling `search_database` when only `query_db` exists |
+| **Valid tool, invalid parameters** | Correct tool but parameters don't match schema | Missing required field, wrong data type |
+| **Valid tool, incorrect values** | Correct tool and parameters, but values are wrong | Passing wrong date format, nonsensical input |
 
-### Memory
+**Mitigation**: Clear tool documentation, constrained tool selection, schema validation, few-shot examples.
 
-Memory allow a model to retain and utilise information.
+### 6.2 Tool Failures
 
-- Three types of memory:
-  - **Internal knowledge**: what the model learnt during training (parametric memory)
-  - **Short-term memory**: the current conversation context (context window)
-  - **Long-term memory**: persistent storage across sessions (external databases, vector stores)
-- Memory is essential for:
-  - Managing information overflow within limited context windows
-  - Maintaining consistency across interactions
-  - Persisting user preferences and prior decisions
-  - Preserving structural integrity of complex data
+The tool itself executes but produces wrong or unusable outputs:
+- External service downtime or rate limiting
+- Stale or incorrect data returned by the tool
+- Misunderstanding of tool capabilities leading to misinterpreted results
+
+**Mitigation**: Robust error handling, fallback strategies, output validation, retry logic.
+
+### 6.3 Efficiency Evaluation
+
+| Metric | What It Measures |
+|--------|-----------------|
+| **Average steps** | Number of steps the agent needs to complete a task |
+| **Cost per task** | Token usage, API calls, tool invocations |
+| **Latency** | Time taken per action in the pipeline |
+
+---
+
+## 7. Memory
+
+### 7.1 Memory Types
+
+Memory allows a model to retain and utilise information across interactions.
+
+| Memory Type | Description | Persistence | Example |
+|------------|------------|-------------|---------|
+| **Internal knowledge** | What the model learnt during training (parametric memory) | Permanent but static | General world knowledge |
+| **Short-term memory** | The current conversation context (context window) | Session only | Current chat history |
+| **Long-term memory** | Persistent storage across sessions | Cross-session | External databases, vector stores |
+
+### 7.2 Why Memory Matters
+
+Memory is essential for:
+- Managing information overflow within limited context windows
+- Maintaining consistency across interactions
+- Persisting user preferences and prior decisions
+- Preserving structural integrity of complex data
+
+---
 
 ## Summary
 
@@ -414,3 +433,59 @@ Memory allow a model to retain and utilise information.
   - Tool use exposes agents to many security risks; rigorous defensive mechanisms need to be in place
 - Both RAG and agents work with a lot of information, often exceeding the maximum context length → necessitates a **memory system** for managing and using all the information
 - While RAG and agents can enable many incredible applications, modifying the underlying model can open up even more possibilities (next chapter: fine-tuning)
+
+---
+
+## Glossary of Key Terms
+
+| **Term** | **Definition** |
+|----------|---------------|
+| **ANN** | Approximate Nearest Neighbour; scalable vector search trading precision for speed |
+| **BM25** | Best Matching 25; probabilistic term-based retrieval algorithm |
+| **Chunking** | Splitting documents into smaller, manageable pieces for retrieval |
+| **Context Precision** | Of all retrieved documents, the percentage relevant to the query |
+| **Context Recall** | Of all relevant documents, the percentage successfully retrieved |
+| **Cross-Encoder** | Model that jointly encodes query and document for accurate relevance scoring |
+| **Embedding** | Vector representation capturing semantic meaning of text |
+| **HNSW** | Hierarchical Navigable Small World; graph-based ANN algorithm |
+| **Hybrid Search** | Combining term-based and embedding-based retrieval |
+| **IDF** | Inverse Document Frequency; measures term importance across documents |
+| **IVF** | Inverted File Index; clusters similar vectors for efficient search |
+| **KNN** | K-Nearest Neighbours; exact nearest neighbour search |
+| **LSH** | Locally Sensitive Hashing; hash-based approximate search |
+| **Product Quantisation** | Compresses vectors by decomposing into subvectors |
+| **RAG** | Retrieval-Augmented Generation; combining retrieval with generation |
+| **Reranking** | Two-stage retrieval: broad fetch followed by precise scoring |
+| **TF-IDF** | Term Frequency-Inverse Document Frequency; combined relevance metric |
+| **Vector Database** | Database storing embeddings for similarity search |
+
+---
+
+## Key Takeaways
+
+> **RAG**
+> - Retrieves relevant information from external sources to improve generation quality
+> - Reduces token usage and improves performance regardless of context window size
+> - Success depends on retriever quality — evaluate both component-by-component and end-to-end
+> - Optimise through chunking, reranking, query rewriting, and contextual retrieval
+
+> **Retrieval Algorithms**
+> - Term-based (BM25, Elasticsearch): fast, cheap, works well out of the box
+> - Embedding-based: more expensive but can be significantly improved over time
+> - Hybrid approach combines the strengths of both via reranking
+
+> **Agents**
+> - Defined by their environment and available tools
+> - Use planning (with reflection) to decompose and execute tasks
+> - More tools → more capabilities → more challenging tasks solvable
+> - **The more automated the agent, the more catastrophic its failures**
+
+> **Memory**
+> - Three types: internal knowledge, short-term (context window), long-term (persistent storage)
+> - Essential for managing information overflow and maintaining consistency
+> - Both RAG and agents often exceed context limits, necessitating memory systems
+
+> **RAG and Agents Relationship**
+> - Both are prompt-based methods — they influence quality through inputs without modifying the model
+> - RAG is a special case of an agent where the retriever is a tool
+> - While powerful, modifying the underlying model (fine-tuning) can unlock further possibilities
