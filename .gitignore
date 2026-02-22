@@ -204,3 +204,5 @@ __marimo__/
 
 .python-version
 *.claude
+*.bkp
+
